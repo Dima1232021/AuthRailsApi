@@ -2,16 +2,28 @@ class SessionsController < ApplicationController
   include CurrentUserConcern
 
   def create
-    user =
-      User
-        .find_by(email: params['user']['email'])
-        .try(:authenticate, params['user']['password'])
+    email = params['user']['email']
+    password = params['user']['password']
+
+    if email.length === 0 || password.length === 0
+      return(
+        render json: {
+                 status: 400,
+                 message: 'Email or Password cannot be blank',
+               }
+      )
+    end
+
+    user = User.find_by(email: email).try(:authenticate, password)
 
     if user
       session[:user_id] = user.id
       render json: { status: :created, logged_in: true, user: user }
     else
-      render json: { status: 401 }
+      render json: {
+               status: 400,
+               message: 'Validation failed: invalid login or password',
+             }
     end
   end
 
